@@ -26,8 +26,20 @@ Repository to note important points on C++ talks
       - [Summary](#summary)
   - [Embrace No Paradigm Programming](#embrace-no-paradigm-programming)
 - [2019](#2019)
-  - [Back to Basics: Smart Pointers](#back-to-basics-smart-pointers)
+  - [RAII and Rule of Zero](#raii-and-rule-of-zero)
+      - [The Rule of Three](#the-rule-of-three)
+      - [The Rule of Zero](#the-rule-of-zero)
+      - [Prefer Rule of Zero when possible](#prefer-rule-of-zero-when-possible)
+      - [The Rule of Five](#the-rule-of-five)
+      - [By-value assignment operator?](#by-value-assignment-operator)
+      - [Examples of Resource Management](#examples-of-resource-management)
+  - [Smart Pointers](#smart-pointers)
   - [Move Semantics](#move-semantics)
+      - [Basics](#basics)
+      - [Special member function generation rules](#special-member-function-generation-rules)
+      - [Forwarding References](#forwarding-references)
+      - [Perfect Forwarding](#perfect-forwarding)
+      - [The Mechanics of std::forward](#the-mechanics-of-stdforward)
 
 # 2020
 ## Exceptions
@@ -243,6 +255,135 @@ public:
 ## [Embrace No Paradigm Programming](https://www.youtube.com/watch?v=fwXaRH5ffJM)
 
 # 2019
-## [Back to Basics: Smart Pointers](https://www.youtube.com/watch?v=xGDLkt-jBJ4)
+## [RAII and Rule of Zero](https://www.youtube.com/watch?v=7Qgd9B1KuMQ&t=215s)
+* [Slides](https://github.com/CppCon/CppCon2019/blob/master/Presentations/back_to_basics_raii_and_the_rule_of_zero/back_to_basics_raii_and_the_rule_of_zero__arthur_odwyer__cppcon_2019.pdf)
+* A destructor is used in a class to clean up all the resources that it created and used during its life time.
+* If a resource managing class has a destructor and is also copyable, it should have copy constructor and copy assignment in order to get rid of double deletion issues.
+#### The Rule of Three
+* If your class directly manages some kind of resource (such as a new’ed pointer), then you almost certainly need to hand-write three special member functions:
+  * A Destructor to free the resource
+  * A Copy Constructor to Copy the resource
+  * A Copy Assignment Operator to free the left-hand resource and copy the right-hand one
+* Use the copy-and-swap idiom to implement the assignment.
+  ```C++ 
+  NaiveVector &NaiveVector::operator=(const NaiveVector &rhs)
+  {
+      NaiveVector copy(rhs);
+      copy.swap(*this);
+      return *this;
+  }
+  ```
+#### The Rule of Zero
+* If your class does not directly manage any resource, but merely uses library components such as vector and string, then you should strive to write no special member functions.Default them all!
+* Let the compiler **implicitly** generate all rule of 3 special funcitons.
+#### Prefer Rule of Zero when possible
+There are two kinds of well-designed value-semantic C++ classes:
+* Business-logic classes that do not manually manage any resources, and follow the Rule of Zero 
+  * They delegate the job of resource management to data members of types such as std::string
+* Resource-management classes (small, single-purpose) that follow the Rule of Three
+  * Acquire the resource in each constructor; free the resource in your destructor; copy-and-swap in your assignment operator
+#### The Rule of Five
+* If your class directly manages some kind of resource (such as a new’ed pointer), then you may need to hand-write five special member functions for correctness and performance:
+  * A Destructor to free the resource
+  * A Copy Constructor to Copy the resource
+  * A move constructor to transfer ownership of the resource
+  * A Copy Assignment Operator to free the left-hand resource and copy the right-hand one
+  * A move assignment operator to free the left-hand resource and transfer ownership of the right-hand one
+```C++ 
+NaiveVector &NaiveVector::operator=(const NaiveVector &rhs)
+{
+    NaiveVector copy(rhs);
+    copy.swap(*this);
+    return *this;
+}
+NaiveVector &NaiveVector::operator=(NaiveVector &&rhs)
+{
+    NaiveVector copy(std::move(rhs));
+    copy.swap(*this);
+    return *this;
+```
+#### By-value assignment operator?
+* Write just one assignment operator and leave the copy up to the caller.
+  ```C++ 
+    NaiveVector &NaiveVector::operator=(NaiveVector copy)
+  {
+      copy.swap(*this);
+      return *this;
+  }
+  ```
+#### Examples of Resource Management
+```C++ 
+  class A {
+    ~A(); // Destrutor
+    A(A const& rhs);
+    A(A && rhs);
+    A& operator=(A const& rhs);
+    A& operator=(A && rhs);
+  }
+```
+| Class | ~A() | A(A const& rhs) | A(A && rhs) | A& operator=(A const& rhs) | A& operator=(A && rhs) |
+|------|-------|-----------------|--------|----------|--------|
+|unique_ptr | Calls delete on raw ptr| DMS. deleted| Transfers the ptr. Null the rhs| DMS. deleted| Calls delete on lhs ptr. Transfers the rhs ptr to lhs. Nulls rhs. |
+|shared_ptr|   decrement refcount. Clean if zero.|  increment refcount | Transfer ownership. No change to refcount.| decrement old refcount. Increment the new refcount. | decrement old refcount. Transer the ownership | 
+|unique_lock| unlock mutex| DMS. deleted. | Transfer ownership. No change to mutex| DMS. deleted.| unlock old mutex. Transfer ownership.|
+|ifstream| Calls close on the handle. | deleted. | Transfer handle and buffrer content. | deleted. | Closes old. Transfers handle and buffer| 
+## [Smart Pointers](https://www.youtube.com/watch?v=xGDLkt-jBJ4)
 
-## Move Semantics
+## [Move Semantics](https://www.youtube.com/watch?v=St0MNEU5b0o)
+* Slieds: [Part 1](https://github.com/CppCon/CppCon2019/blob/master/Presentations/back_to_basics_move_semantics_part_1/back_to_basics_move_semantics_part_1__klaus_iglberger__cppcon_2019.pdf) [Part 2](https://github.com/CppCon/CppCon2019/blob/master/Presentations/back_to_basics_move_semantics_part_2/back_to_basics_move_semantics_part_2__klaus_iglberger__cppcon_2019.pdf)
+#### Basics
+* Lvalues are any memory address with a name.
+* Rvalues doesnt have a name. They represent objects that are no longer needed at caller side.
+* ```std::move()``` **unconditionally** casts it input to **Rvalue reference**. 
+    * It doesn't move anything.
+    ```C++ 
+    template <typename T>
+    std::remove_reference_t<T> &&
+    move(T &&t) noexcept { 
+        return static_cast<std::remove_reference_t<T> &&>(t);
+     }
+    ```
+#### Special member function generation rules
+* Default move operations are generated if no destructor or copy operations is **user defined**.
+* Default copy operations are generated if no move operations is user defined.
+* Note: =default and =delete count as user-defined
+
+#### Forwarding References
+```C++ 
+template< typename T > 
+void f( T&& x );       // Forwarding reference 
+auto&& var2 = var1;    // Forwarding reference
+```
+* Forwarding references represent 
+  *  ... an lvalue reference if they are initialized by an lvalue; 
+  *  ... an rvalue reference if they are initialized by an rvalue
+*  Rvalue references are forwarding references if they 
+   *  ... involve type deduction; 
+   *  ... appear in exactly the form T&& or auto&&.
+* Forwarding references use reference collapsing to do its magic.
+  * The rule is very simple. & always wins. So & & is &, and so are && & and & &&. The only case where && emerges from collapsing is && &&.
+  <img src="images/Reference_Collapsing.png" width="600"/>
+ #### [Perfect Forwarding](https://youtu.be/pIzaZbKUw2s?t=458)
+ * Solves the problem of writing a function which merely forwarding its arguments to another function.
+  ```C++ 
+  namespace std
+  {
+      template <typename T, typename... Args>
+      unique_ptr<T> make_unique(Args && ... args) 
+      { 
+          return unique_ptr<T>(new T(std::forward<Args>(args)...)); 
+          }
+  } // namespace std
+  ```
+#### The Mechanics of std::forward
+* std::forward conditionally casts its input into an rvalue reference   
+  *  If the given value is an lvalue, cast to an lvalue reference 
+  *  If the given value is an rvalue, cast to an rvalue reference
+* std::forward does not forward anything
+```C++ 
+template <typename T>
+T &&forward(std::remove_reference_t<T> &t) noexcept 
+{ 
+    return static_cast<T &&>(t);
+}
+```
