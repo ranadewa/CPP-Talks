@@ -2,6 +2,12 @@
 Repository to note important points on C++ talks
 - [CPP-Talks](#cpp-talks)
 - [2020](#2020)
+  - [The Price of Dynamic Memory](#the-price-of-dynamic-memory)
+      - [Memory Allocation and Allocators](#memory-allocation-and-allocators)
+      - [Memory fragmentation](#memory-fragmentation)
+    - [Memory Access Performance](#memory-access-performance)
+      - [Memory Caches](#memory-caches)
+  - [Design Patterns](#design-patterns)
   - [Exceptions](#exceptions)
       - [How they work](#how-they-work)
       - [When to use exceptions](#when-to-use-exceptions)
@@ -42,6 +48,67 @@ Repository to note important points on C++ talks
       - [The Mechanics of std::forward](#the-mechanics-of-stdforward)
 
 # 2020
+## [The Price of Dynamic Memory](https://www.youtube.com/watch?v=E01wFA1-0YM)
+#### Memory Allocation and Allocators
+* Dynamic memory is utilized using ```malloc``` & ```free``` in C , ```new``` & ```delete``` in C++.
+  ```C++ 
+  struct A {};
+
+  A* ptr = (A*)malloc(sizeof(A));  // A pointer to a heap allocated A
+  free(ptr); // deallocates memory
+
+  ptr = (cast-type*) malloc(byte-size)
+  ptr = (cast-type*)calloc(n, element-size);
+  ptr = realloc(ptr, newSize);  // where ptr is reallocated with new size 'newSize'. Maintains already allocated values
+  ```
+  ```C++ 
+  A* ptr = new A(); // calls malloc & constructor
+  delete ptr; // calls destructor, and free
+
+  A* ptrA = new A[10]; // Creates 10 As
+  delete [] ptrA; // free them
+
+  struct B {
+    B(int i) {}
+  };
+
+  B* pt = new B(10);
+  new (pt) B(100); // placement new. Use existing memory to create object
+  B* ptr = new B[3]{1, 2, 3}; // constructs 3 Bs with different args
+  ```
+* Allocators & allocation process. Allocator is an implementation of malloc and free functions to allow the programme to allocate and deallocate memory.
+* Allocator internally asks for large chunck of memory from OS and serves the program with smaller chunchks when malloc is called. 
+#### Memory fragmentation
+* In a long running programs continuous allocation and deallocation causes memory to be fragmented.
+* Tackling memory fragmentation:
+  * restart the program occatinally
+  * preallocate all the needed  memory at the program beginnig. (Object pools)
+  * cache memory chunks
+  * use special memory allocators that promise low fragmentaion
+### Memory Access Performance
+* A program's performance will also depend on the way the memory is accessed. More specifically,
+  * How the data is laid out in memory.
+  * What is the access pattern of the data.
+* Simple abstraction of malloc/free doesn't take the into account the underlying hardware. The highest performance can be gained by breaking the allocator abstraction. ie. if the algorithm knows how malloc/free works in order to allocate memory optimally.
+####  Memory Caches  
+* Memory speed is a bottle neck on mordern systems.  It can take around 300 CPU cycles to load data from main memory to CPU register. 
+* On CPU memory called Cache memory is used to mitigate this.
+  * In memory data access begin with loading data from main memory to the cache.
+  * Eviction is the process of removing memory from cache wich is unused for some time.
+  * CPU *data prefeter* can recognise memory access patterns for the program and pre load the data before it is required by the program.    
+  
+    <img src="images/cache_memory.png" width="300"/>
+* Cache is divided in to cache lines. (typically 64bytes in modern systems)
+* If data is oriented in a manner that they fit to the same cache line the access is optimised.
+* Cache memory types:
+  * Insturction cahce
+  * Data cache
+  * TLB cache - used to translate virtual memory to physical address
+
+* Overhead of polymorpism using vector<pointers>
+  <img src="images/optimal_memory_layout.png" width="600"/>
+## [Design Patterns](https://www.youtube.com/watch?v=2UUqX2eIdSM&list=PLHTh1InhhwT5o3GwbFYy3sR7HDNRA353e&index=11)
+
 ## Exceptions
 #### How they work
 * Key words
