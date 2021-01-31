@@ -105,8 +105,14 @@ Repository to note important points on C++ talks
   * Data cache
   * TLB cache - used to translate virtual memory to physical address
 
-* Overhead of polymorpism using vector<pointers>
-  <img src="images/optimal_memory_layout.png" width="600"/>
+* Overhead of polymorpism
+  * When it comes to polymorphism, the address of a non-virtual function is known at compile-time and the compiler can emit the call directly. The address of a virtual function is not known at compile-time and the compiler needs to figure it out during runtime. 
+  *  For each class that has virtual functions, there is a virtual table (vtable) that contains the address of each of its virtual functions. Additionally, each instance of the type contains a pointer to this list (vtable*). This is a hidden instance member.    
+    <img src="images/vtable.gif" width="400"/>
+  * Array of pointers to objects  
+  <img src="images/optimal_memory_layout.png" width="400"/>
+  * This can be prevented by using vector of objects instead of vector of object pointers. But it doesn't play nice with object oriented design. Specially polymorphism. 
+  * std::variant is also a better apporach in this.
 ## [Design Patterns](https://www.youtube.com/watch?v=2UUqX2eIdSM&list=PLHTh1InhhwT5o3GwbFYy3sR7HDNRA353e&index=11)
 
 ## Exceptions
