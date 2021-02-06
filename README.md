@@ -2,6 +2,9 @@
 Repository to note important points on C++ talks
 - [CPP-Talks](#cpp-talks)
 - [2020](#2020)
+  - [Effective replacement of dynamic polymorphism with std::variant](#effective-replacement-of-dynamic-polymorphism-with-stdvariant)
+      - [Things to avoid on the fast path](#things-to-avoid-on-the-fast-path)
+      - [Dynamic Polymorphism vs Variant](#dynamic-polymorphism-vs-variant)
   - [The Price of Dynamic Memory](#the-price-of-dynamic-memory)
       - [Memory Allocation and Allocators](#memory-allocation-and-allocators)
       - [Memory fragmentation](#memory-fragmentation)
@@ -46,8 +49,34 @@ Repository to note important points on C++ talks
       - [Forwarding References](#forwarding-references)
       - [Perfect Forwarding](#perfect-forwarding)
       - [The Mechanics of std::forward](#the-mechanics-of-stdforward)
+- [2018](#2018)
+  - [C++ Function Templates: How do they work?](#c-function-templates-how-do-they-work)
+- [2017](#2017)
+  - [An inspiring introduction into Template Meta Programming](#an-inspiring-introduction-into-template-meta-programming)
+- [2016](#2016)
+  - [Template Normal Programming](#template-normal-programming)
+      - [Defining a template specialisation](#defining-a-template-specialisation)
+      - [Partial Speciliasation](#partial-speciliasation)
+      - [How to partially specialise a function right](#how-to-partially-specialise-a-function-right)
+      - [Variadic Templates](#variadic-templates)
+  - [Variadic Templates in C++11 / C++14 - An Introduction](#variadic-templates-in-c11--c14---an-introduction)
+    - [Variadic function templates](#variadic-function-templates)
+    - [Variadic class templates](#variadic-class-templates)
 
 # 2020
+## [Effective replacement of dynamic polymorphism with std::variant](https://www.youtube.com/watch?v=gKbORJtnVu8)
+[slides](https://github.com/CppCon/CppCon2018/blob/master/Presentations/effective_replacement_of_dynamic_polymorphism_with_stdvariant/effective_replacement_of_dynamic_polymorphism_with_stdvariant__mateusz_pusz__cppcon_2018.pdf)
+
+#### Things to avoid on the fast path
+* C++ tools that trade performance for usability (e.g. std::shared_ptr, std::function)
+* Throwing exceptions on likely code path
+* Dynamic polymorphism
+* Multiple inheritance
+* RTTI (Run Time Type Information): using dynamic_cast, typeid operators & typeinfo class
+* Dynamic memory allocations
+####  Dynamic Polymorphism vs Variant
+<img src="images/dynamicPolimorphismVsVariant.png" width="600"/>
+  
 ## [The Price of Dynamic Memory](https://www.youtube.com/watch?v=E01wFA1-0YM)
 #### Memory Allocation and Allocators
 * Dynamic memory is utilized using ```malloc``` & ```free``` in C , ```new``` & ```delete``` in C++.
@@ -460,3 +489,313 @@ T &&forward(std::remove_reference_t<T> &t) noexcept
     return static_cast<T &&>(t);
 }
 ```
+# 2018
+## [C++ Function Templates: How do they work?](https://www.youtube.com/watch?v=NIDEjY5ywqU)
+* Template specialisations doesn't contribute to overload resolution.
+  
+# 2017
+## [An inspiring introduction into Template Meta Programming](https://www.youtube.com/watch?v=UnIc_qJ0DRc)
+
+# 2016
+## [Template Normal Programming](https://www.youtube.com/watch?v=vwrXHznaYLA)
+Slides [P1](https://github.com/CppCon/CppCon2016/blob/master/Tutorials/Template%20Normal%20Programming%2C%20Part%201/Template%20Normal%20Programming%2C%20Part%201%20-%20Arthur%20O'Dwyer%20-%20CppCon%202016.pdf) [P2](https://github.com/CppCon/CppCon2016/blob/master/Tutorials/Template%20Normal%20Programming%2C%20Part%202/Template%20Normal%20Programming%2C%20Part%202%20-%20Arthur%20O'Dwyer%20-%20CppCon%202016.pdf)
+
+* function templates and class templates existed in C++ prior C++11.
+  ```C++ 
+  // Function template example
+  template<typename T>
+  T swap(T& a, T& b)
+  {
+    T temp = a;
+    a = b;
+    b = temp;
+  }
+  // class template example
+  template<class T>
+  struct User {
+    T networth;
+    static int id;
+  }
+
+  template<class T>
+  int User<T>::id = 0;
+  ```
+* Two new kinds of templates.  
+    * *alias templates* in C++11.  
+    * *variable templates* in C++14.
+* variable templates - exactly 100% same to a static data member of a class template.
+  ```C++ 
+  template<typename T>
+  struct is_void{  // template with a static data member
+    static const bool value = (some exrpession)
+  }
+
+  template<typename T> // equivalent variable template
+  const bool is_void_v = (some expresssion)
+  ```
+* Aliasing is same as typedef with different syntax.
+  ```C++ 
+  typedef std::vector<int> myvec_int; // C++03 alias syntax
+  using myvec_double = std::vector<double>; // C++11 syntax
+
+  template<typename T>
+  using myvec = std::vector<T>; // C++11 syntax
+
+  int main(){    
+    static_assert(is_same_v<myvec_int, std::vector<int>>);   
+    static_assert(is_same_v<myvec_double, std::vector<double>>);   
+    static_assert(is_same_v<myvec<float>, std::vector<float>>);
+  }
+  ```
+* Calling specialisations explicitly.
+  ```C++ 
+  template<typename T>
+  T abs(T x) 
+  {
+    return (x >=0) ? x : -x;
+  }
+
+  main ()
+  {
+    abs<int>('x'); // [T = int]
+    abs<double>(3); // [T = double]
+  }
+  ```
+* Default template parameters. 
+  ```C++ 
+  template<typename T = char *>
+  void add() {}
+
+  main()
+  {
+    add<int>(); // [T = int]
+    add<>(); // [T = char *]
+    add(); // [T = char* ]
+  }
+  ```
+* Template type deduction for references.
+  ```C++ 
+  template<typename T>
+  void f(T t) {}
+
+  template<typename T>
+  void g(T* t){}
+
+  template<typename T>
+  void h(T& t){}
+
+  template<typename T>
+  void k(T&& t){}
+
+  main()
+  {
+    int i = 5;
+    f(i);             // --> 1
+    g(&i);            // --> 2
+    h(i);             // --> 3
+    k(std::move(i));  // --> 4
+    k(i);             // --> 5
+
+    const int p = 0;
+    k(p);             // --> 6
+    k(std::move(p));  // --> 7
+  }
+  ``` 
+  | scenario | Template deduciton |
+  |----------| -------------------|
+  | 1        |  T = int |
+  | 2        |  T = int |
+  | 3        |  T = int |
+  | 4        |  T = int |
+  | 5        |  T = int& |
+  | 6        |  T = const int&|
+  | 7        |  T = const int|
+
+ Here for 5th scenario reference collapsing happens. We need to have a lvalue reference inside the function parameter after T's type is deducted. This is because the input parameter is ```i``` and it acts as ```int&```. In order to have a lvalue reference as a result when the function parameter already has && in it T should be int&.
+
+```C++ 
+template<typename T>
+void f(T& t){}
+
+int main()
+{
+  int i = 42;
+  f(static_cast<int&>(i)); // --> 1
+  f(static_cast<int&&>(i)); // --> 2
+  f(static_cast<volatile int&>(i)); // --> 3
+  f(static_cast<volatile int&&>(i)); // --> 4
+  f(static_cast<const int&>(i));      // --> 5
+  f(static_cast<const int&&>(i));     // --> 6
+}
+```
+
+  | scenario | Template deduciton |
+  |----------| -------------------|
+  | 1        |  T = int |
+  | 2        |  Compile time error. Cannot deduce T to become ```int&&``` |
+  | 3        |  T = volatile int |
+  | 4        |  Compile time error. Cannot deduce T to become ```volatile int&&``` |
+  | 5        |  T = const int |
+  | 6        |  T = const int **special case to support backward compatibility**|
+
+  #### Defining a template specialisation
+  * Prefix the definition with ```template<>```, and then write the function definition as if you were using the specialisation you want to write.
+  ```C++ 
+  template<typename T>
+  struct is_void {
+    static constexpr bool value = false;
+  }
+
+  template<> // Specialisation 
+  struct is_void<void> {
+    static constexpr bool value = true;
+
+  template<typename T>
+  T abs(T x) {}
+
+  template<> // Specialisation 1
+  int abs<int>(int x){}  
+
+  template<> // Specialisation 2
+  int abs<>(int x){}
+
+  template<> // Specialisation 3, often used
+  int abs(int x){}    
+  ```
+  #### Partial Speciliasation
+  ```C++ 
+  // primary template
+  template<typename T>
+  constexpr bool is_array = false;
+ 
+  // These are partial specialisations
+  template<typename Tp>
+  constexpr bool is_array<Tp[]> = true;
+
+  template<typename Tp, int N>
+  constexpr bool is_array<Tp[N]> = true;
+
+  // this is a full specialisation
+  template<>
+  constexpr bool is_array<void> = true;
+  ```
+####  How to partially specialise a function right
+* If you want a partial specialisation then delegate all the work to a class template and partially specialise it.
+```C++ 
+template<typename T> // Primary class template
+class is_pointer_impl{
+  static bool _(){return false;}
+};
+
+template<typename Tp>
+class is_pointer_impl<Tp*> {
+  static bool _(){return true;}
+};
+
+template<typename T>
+bool is_pointer(T x){
+  return is_pointer_impl<T>::_();
+}
+```
+#### Variadic Templates
+
+
+## [Variadic Templates in C++11 / C++14 - An Introduction](https://www.youtube.com/watch?v=R1G3P5SRXCw)
+[Slides](https://github.com/CppCon/CppCon2015/blob/master/Presentations/Variadic%20Templates%20-%20Guidelines,%20Examples%20and%20Compile-time%20computation/Variadic%20Templates%20-%20Guidelines,%20Examples%20and%20Compile-time%20computation%20-%20Peter%20Sommerlad%20-%20CppCon%202015.pdf)
+### Variadic function templates
+* Defining a variadic template function
+  
+  ```C++ 
+  template<typename... ARGS> // --> any number of types
+  void fun(ARGS... args) // --> any number of arguments
+  {
+    println(args...); // -> expand parameters as arguments
+  }
+  ```
+* Syntax uses **...** (ellipsis) symbol in serveral places.
+  | place | meaining | example|
+  |-------|----------|--------|
+  | In front of a name | **define** name as a place holder for a variable number of elements. | ```typename... ARGS``` | 
+  | After a name | **expand** the name to a list of all elements it represents.| ```args...```|
+  | between two names | define the second name as a list of parameters given by the first.  | ```ARGS... args```  |
+
+* Variadic terminology
+  ```C++ 
+  template<typename... T> // --> template type parameter pack
+  void funct(T... args) // --> function parameter pack
+  {
+    x(args...); // --> pack expansion
+  }
+  ```
+  * Pack expansion can be done after an expression using the parameter pack
+  * special version of sizeof...(pack) yields n-of-args
+* Implementing a variadic template function
+  * Key is recursion in the definitions
+    * base case with zero arguments
+    * recursive case with 1 explicit argument and a tail consisting of a variadic list of arguments
+  ```C++ 
+
+  void print(){}  // base case
+
+  template<typename T1, typename... T>
+  void print(T1 t1, T... args)
+  {
+
+    cout << t1;
+    if(sizeof ...(args))
+      cout << ", ";
+
+    print(args...); //recurse on tail 
+  }
+  ```
+### Variadic class templates
+ * Used in ```std::tuple``` which is a means to pass parameter packs around as a single element.
+    ```C++ 
+    auto tup = std::make_tuple(1, 2, "three");
+    int a; double b; string s;
+    std::tie(a, b, s) = tup;
+    ```
+* use ... in **template template parameters.**
+  * template with std::vector as return container
+    ```C++ 
+    template<typename T1, typename... T>
+    auto getContianer(T1 t, T... args)
+    {
+        std::vector<T1> vect {t, args...};
+        return vect;
+    }
+
+    int main()
+    {
+        // Create a container from any number of given of elements. Elements can be of any type and container is defaulted to vector but can  be changed.
+        auto intCont = getContianer(1, 2, 3, 4);
+        auto charCont = getContianer('1', '1', '1');
+        
+        return 0;
+    }
+    ```
+  * template return container for any container type
+    ```C++ 
+    template<template<typename, typename...> class ContainerType = std::vector, // template template paramerter defaulted to std::vector
+     typename T1, typename... T>
+    auto getContainer(T1 t, T... args)
+    {
+      ContainerType<T1> cont = {t, args...};
+      return cont;
+    }
+
+    int main()
+    {
+        // Create a container from any number of given of elements. Elements can be of any type and container is defaulted to vector but can  be changed.
+        auto intCont = getContianer(1, 2, 3, 4);
+        auto charCont = getContianer<std::list>(1, 2, 3, 4);
+        
+        cout << typeid(intCont).name() << endl;  // prints St6vectorIiSaIiEE
+        cout << typeid(charCont).name() << endl; // prints  St4listIiSaIiEE
+        return 0;
+    }
+    ```
+
+
+
+
