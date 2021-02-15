@@ -35,6 +35,13 @@ Repository to note important points on C++ talks
       - [Summary](#summary)
   - [Embrace No Paradigm Programming](#embrace-no-paradigm-programming)
 - [2019](#2019)
+  - [Destructor Case Studies: Best Practices for Safe and Efficient Teardown](#destructor-case-studies-best-practices-for-safe-and-efficient-teardown)
+      - [Definition:](#definition)
+    - [Virtual Destructors](#virtual-destructors)
+      - [Order of Destruction](#order-of-destruction)
+    - [Explicit Destructors](#explicit-destructors)
+    - [Recommentdations](#recommentdations)
+  - [Type Erasure](#type-erasure)
   - [RAII and Rule of Zero](#raii-and-rule-of-zero)
       - [The Rule of Three](#the-rule-of-three)
       - [The Rule of Zero](#the-rule-of-zero)
@@ -50,10 +57,13 @@ Repository to note important points on C++ talks
       - [Perfect Forwarding](#perfect-forwarding)
       - [The Mechanics of std::forward](#the-mechanics-of-stdforward)
 - [2018](#2018)
+  - [50 shades of C++](#50-shades-of-c)
   - [C++ Function Templates: How do they work?](#c-function-templates-how-do-they-work)
 - [2017](#2017)
+  - [A Soupçon of SFINAE](#a-soupçon-of-sfinae)
   - [An inspiring introduction into Template Meta Programming](#an-inspiring-introduction-into-template-meta-programming)
 - [2016](#2016)
+  - [Want fast C++? Know your hardware!](#want-fast-c-know-your-hardware)
   - [Template Normal Programming](#template-normal-programming)
       - [Defining a template specialisation](#defining-a-template-specialisation)
       - [Partial Speciliasation](#partial-speciliasation)
@@ -357,6 +367,48 @@ public:
 ## [Embrace No Paradigm Programming](https://www.youtube.com/watch?v=fwXaRH5ffJM)
 
 # 2019
+## [Destructor Case Studies: Best Practices for Safe and Efficient Teardown](https://www.youtube.com/watch?v=XvWyLAW_U0Q)
+#### Definition: 
+One, deterministic, automatic, symmetric, special member function with 
+  * No name
+  * No parameters
+  * No return type    
+Designed to give last rites before object death.
+
+### Virtual Destructors
+Guarantee that derived classes get cleaned up if ```delete``` on a ```Base*``` could ever point to ```Derived*```.
+#### Order of Destruction
+Rule of thumb: Reverse order of constructoin.
+Specifically: 
+  1. Destructor body
+  2. Data members in the reverse order of declaration.
+  3. Direct non-virtual base classes in reverse order.
+  4. Virtual base classes in reverse order.
+
+<img src="images/destruction_order.png" width="600"/>
+
+### Explicit Destructors
+* Destructors can be called directly
+* Very powerfull for custom memroy scenarios
+* Use-cases
+  * Paired with placement new
+  * std::vector
+  * Custom allocators
+### Recommentdations
+* Best destructor is no defined destructor. Even the default. Only defulting the destructor will not generate implicit copy and move constructors.
+* Avoid calling public functions in destructors. 
+* Put any resource that needs to be released in its own object(RAII)
+* Dtors are called only for fully constructed objs. If ctor throws, object is not fully contructed. 
+* If there are virutal functions in a class it also should have a **virtual public destructor**.
+* Virtual fucntions are not virtual inside constructors or destructors. Don't call virtual functoins in ctors or dtors.
+* Destructors should never throw.
+
+
+
+## [Type Erasure](https://www.youtube.com/watch?v=tbUCHifyT24&list=PLXTVlgmc2KcD3mgkZfrq3jJl8RNaAz-lp&index=27)
+[Slide](https://github.com/CppCon/CppCon2019/blob/master/Presentations/back_to_basics_type_erasure/back_to_basics_type_erasure__arthur_odwyer__cppcon_2019.pdf)   
+
+
 ## [RAII and Rule of Zero](https://www.youtube.com/watch?v=7Qgd9B1KuMQ&t=215s)
 * [Slides](https://github.com/CppCon/CppCon2019/blob/master/Presentations/back_to_basics_raii_and_the_rule_of_zero/back_to_basics_raii_and_the_rule_of_zero__arthur_odwyer__cppcon_2019.pdf)
 * A destructor is used in a class to clean up all the resources that it created and used during its life time.
@@ -490,13 +542,30 @@ T &&forward(std::remove_reference_t<T> &t) noexcept
 }
 ```
 # 2018
+## [50 shades of C++](https://www.youtube.com/watch?v=9-_TLTdLGtc)
 ## [C++ Function Templates: How do they work?](https://www.youtube.com/watch?v=NIDEjY5ywqU)
+
 * Template specialisations doesn't contribute to overload resolution.
   
 # 2017
+## [A Soupçon of SFINAE](https://www.youtube.com/watch?v=ybaE9qlhHvw&list=PLXTVlgmc2KcD3mgkZfrq3jJl8RNaAz-lp&index=12)
+[Slides](https://github.com/CppCon/CppCon2017/blob/master/Presentations/A%20Soupcon%20of%20SFINAE/A%20Soupcon%20of%20SFINAE%20-%20Arthur%20O%27Dwyer%20-%20CppCon%202017.pdf)
+
+ 
 ## [An inspiring introduction into Template Meta Programming](https://www.youtube.com/watch?v=UnIc_qJ0DRc)
 
 # 2016
+## [Want fast C++? Know your hardware!](https://www.youtube.com/watch?v=BP6NxVxDQIs)
+* Know if you are bound by computation or bound by data access.
+* Prefer contiguous data in memory.
+* Prefer constant strides to randomness.
+* Keep data close together in space. 
+* Avoid dependencies between successive computations.
+* Avoid hard to predict branches
+* Be aware of cache lines & alignment.
+* Minimise number of  cache lines accessed by multiple threads.
+* Don't be suprised by hardware weirdness. (Cache associativity, denormals)
+
 ## [Template Normal Programming](https://www.youtube.com/watch?v=vwrXHznaYLA)
 Slides [P1](https://github.com/CppCon/CppCon2016/blob/master/Tutorials/Template%20Normal%20Programming%2C%20Part%201/Template%20Normal%20Programming%2C%20Part%201%20-%20Arthur%20O'Dwyer%20-%20CppCon%202016.pdf) [P2](https://github.com/CppCon/CppCon2016/blob/master/Tutorials/Template%20Normal%20Programming%2C%20Part%202/Template%20Normal%20Programming%2C%20Part%202%20-%20Arthur%20O'Dwyer%20-%20CppCon%202016.pdf)
 
