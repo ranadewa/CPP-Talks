@@ -2,6 +2,8 @@
 Repository to note important points on C++ talks
 - [CPP-Talks](#cpp-talks)
 - [2020](#2020)
+  - [Algebraic Data Types](#algebraic-data-types)
+    - [Types](#types)
   - [Effective replacement of dynamic polymorphism with std::variant](#effective-replacement-of-dynamic-polymorphism-with-stdvariant)
       - [Things to avoid on the fast path](#things-to-avoid-on-the-fast-path)
       - [Dynamic Polymorphism vs Variant](#dynamic-polymorphism-vs-variant)
@@ -35,6 +37,9 @@ Repository to note important points on C++ talks
       - [Summary](#summary)
   - [Embrace No Paradigm Programming](#embrace-no-paradigm-programming)
 - [2019](#2019)
+  - [C++ Design Patterns: From C++03 to C++17 ](#c-design-patterns-from-c03-to-c17-)
+    - [Builder Pattern](#builder-pattern)
+    - [Visitor](#visitor)
   - [Destructor Case Studies: Best Practices for Safe and Efficient Teardown](#destructor-case-studies-best-practices-for-safe-and-efficient-teardown)
       - [Definition:](#definition)
     - [Virtual Destructors](#virtual-destructors)
@@ -57,6 +62,8 @@ Repository to note important points on C++ talks
       - [Perfect Forwarding](#perfect-forwarding)
       - [The Mechanics of std::forward](#the-mechanics-of-stdforward)
 - [2018](#2018)
+  - [CTAD in C++17](#ctad-in-c17)
+  - [Design for Performance](#design-for-performance)
   - [50 shades of C++](#50-shades-of-c)
   - [C++ Function Templates: How do they work?](#c-function-templates-how-do-they-work)
 - [2017](#2017)
@@ -74,6 +81,14 @@ Repository to note important points on C++ talks
     - [Variadic class templates](#variadic-class-templates)
 
 # 2020
+## [Algebraic Data Types](https://www.youtube.com/watch?v=OJzmWqCCZaM)
+[slides](https://github.com/CppCon/CppCon2020/blob/main/Presentations/back_to_basics_algebraic_data_types/back_to_basics_algebraic_data_types__arthur_odwyer__cppcon_2020.pdf)
+### Types
+* pair
+* tuple
+* optional
+* variant
+ 
 ## [Effective replacement of dynamic polymorphism with std::variant](https://www.youtube.com/watch?v=gKbORJtnVu8)
 [slides](https://github.com/CppCon/CppCon2018/blob/master/Presentations/effective_replacement_of_dynamic_polymorphism_with_stdvariant/effective_replacement_of_dynamic_polymorphism_with_stdvariant__mateusz_pusz__cppcon_2018.pdf)
 
@@ -367,6 +382,15 @@ public:
 ## [Embrace No Paradigm Programming](https://www.youtube.com/watch?v=fwXaRH5ffJM)
 
 # 2019
+## [C++ Design Patterns: From C++03 to C++17 ](https://www.youtube.com/watch?v=MdtYi0vvct0)
+[slides](https://github.com/CppCon/CppCon2019/blob/master/Presentations/design_patterns/design_patterns__fedor_pikus__cppcon_2019.pdf)
+### Builder Pattern
+* Used to construct complex objects that are initialized in multiple stages
+### Visitor
+* Seperates the algorithm from the object structure which is the data of the algorithm.
+* Adds new operations to the classs hierarchy without modifying the classes themselves.
+* Uses double dispatching.
+*  
 ## [Destructor Case Studies: Best Practices for Safe and Efficient Teardown](https://www.youtube.com/watch?v=XvWyLAW_U0Q)
 #### Definition: 
 One, deterministic, automatic, symmetric, special member function with 
@@ -542,6 +566,11 @@ T &&forward(std::remove_reference_t<T> &t) noexcept
 }
 ```
 # 2018
+## [CTAD in C++17](https://www.youtube.com/watch?v=UDs90b0yjjQ)
+
+## [Design for Performance](https://www.youtube.com/watch?v=m25p3EtBua4)
+[slides](https://github.com/CppCon/CppCon2018/blob/master/Presentations/design_for_performance/design_for_performance__fedor_pikus__cppcon_2018.pdf)
+
 ## [50 shades of C++](https://www.youtube.com/watch?v=9-_TLTdLGtc)
 ## [C++ Function Templates: How do they work?](https://www.youtube.com/watch?v=NIDEjY5ywqU)
 
