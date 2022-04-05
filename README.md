@@ -567,6 +567,15 @@ T &&forward(std::remove_reference_t<T> &t) noexcept
 ```
 # 2018
 ## [CTAD in C++17](https://www.youtube.com/watch?v=UDs90b0yjjQ)
+* Function template argument deduction was there from C++ 98, Class Template Argument Deduction builds on that and gives the user ability to define templated classes with initialisers without the template argmuent list.
+
+```C++
+vector<int> {1, 2, 3}; // Prior C++ 17
+vector {1,2,3}; // In C++ 17, vector<int> is deduced
+```
+
+* For some scenarios where the compiler fails to deduct the template arguments we can provide deduction guides as well. 
+
 
 ## [Design for Performance](https://www.youtube.com/watch?v=m25p3EtBua4)
 [slides](https://github.com/CppCon/CppCon2018/blob/master/Presentations/design_for_performance/design_for_performance__fedor_pikus__cppcon_2018.pdf)
